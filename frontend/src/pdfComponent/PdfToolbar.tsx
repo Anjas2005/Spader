@@ -1,264 +1,238 @@
 import type {
-  KeyboardEvent,
-} from "react";
-
-import type {
-  ReadingMode,
+  PdfToolbarProps,
 } from "./pdfTypes";
 
-interface PdfToolbarProps {
-  pageNumber: number;
-  pageInput: string;
-  totalPages: number;
-  scale: number;
-  readingMode: ReadingMode;
-
-  onPrevious: () => void;
-  onNext: () => void;
-
-  onPageInputChange: (
-    value: string,
-  ) => void;
-
-  onPageInputFocus: () => void;
-  onPageInputBlur: () => void;
-
-  onPageInputKeyDown: (
-    event: KeyboardEvent<HTMLInputElement>,
-  ) => void;
-
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-
-  onReadingModeChange: (
-    mode: ReadingMode,
-  ) => void;
-}
-
 function PdfToolbar({
+  file,
   pageNumber,
+  numPages,
   pageInput,
-  totalPages,
-  scale,
-  readingMode,
-  onPrevious,
-  onNext,
-  onPageInputChange,
+  setPageInput,
   onPageInputFocus,
   onPageInputBlur,
-  onPageInputKeyDown,
+  onCommitPage,
+  onPrevious,
+  onNext,
+  zoomPercent,
   onZoomIn,
   onZoomOut,
+  onResetZoom,
+  readingMode,
   onReadingModeChange,
+  onBack,
 }: PdfToolbarProps) {
   return (
-    <div
-      className="
-        z-50
-        flex
-        h-14
-        min-h-14
-        shrink-0
-        items-center
-        gap-2
-        border-b
-        border-zinc-800
-        bg-zinc-950
-        px-3
-        text-zinc-200
-      "
-    >
-      <button
-        onClick={onPrevious}
-        disabled={
-          pageNumber === 1
-        }
-        className="
-          rounded-md
-          px-3 py-1.5
-          text-sm
-          transition
-          hover:bg-zinc-800
-          disabled:cursor-not-allowed
-          disabled:opacity-40
-        "
-      >
-        Previous
-      </button>
-
-      <span
-        className="
-          whitespace-nowrap
-          text-sm
-          text-zinc-400
-        "
-      >
-        Page {pageNumber} /{" "}
-        {totalPages}
-      </span>
-
-      <button
-        onClick={onNext}
-        disabled={
-          pageNumber === totalPages
-        }
-        className="
-          rounded-md
-          px-3 py-1.5
-          text-sm
-          transition
-          hover:bg-zinc-800
-          disabled:cursor-not-allowed
-          disabled:opacity-40
-        "
-      >
-        Next
-      </button>
-
-      <input
-        type="number"
-        min={1}
-        max={totalPages}
-        value={pageInput}
-        onFocus={
-          onPageInputFocus
-        }
-        onChange={(event) =>
-          onPageInputChange(
-            event.target.value,
-          )
-        }
-        onBlur={onPageInputBlur}
-        onKeyDown={
-          onPageInputKeyDown
-        }
-        className="
-          w-16
-          rounded-md
-          border
-          border-zinc-700
-          bg-zinc-900
-          px-2 py-1.5
-          text-center
-          text-sm
-          text-zinc-200
-          outline-none
-          focus:border-zinc-500
-        "
-      />
-
-      <div
-        className="
-          mx-1
-          h-6
-          w-px
-          bg-zinc-800
-        "
-      />
-
-      <button
-        onClick={onZoomOut}
-        className="
-          flex
-          h-8
-          w-8
-          items-center
-          justify-center
-          rounded-md
-          text-lg
-          transition
-          hover:bg-zinc-800
-        "
-      >
-        −
-      </button>
-
-      <span
-        className="
-          w-14
-          text-center
-          text-sm
-          text-zinc-400
-        "
-      >
-        {Math.round(
-          scale * 100,
-        )}
-        %
-      </span>
-
-      <button
-        onClick={onZoomIn}
-        className="
-          flex
-          h-8
-          w-8
-          items-center
-          justify-center
-          rounded-md
-          text-lg
-          transition
-          hover:bg-zinc-800
-        "
-      >
-        +
-      </button>
-
-      <div className="flex-1" />
-
-      <div
-        className="
-          flex
-          rounded-lg
-          bg-zinc-900
-          p-1
-        "
-      >
+    <header className="spader-topbar">
+      <div className="spader-brand">
         <button
-          onClick={() =>
-            onReadingModeChange(
-              "page",
-            )
-          }
-          className={`
-            rounded-md
-            px-3 py-1.5
-            text-sm
-            transition
-            ${
+          type="button"
+          onClick={onBack}
+          className="spader-back-button"
+          title="Back"
+        >
+          <span aria-hidden="true">
+            ←
+          </span>
+
+          <span>
+            Back
+          </span>
+        </button>
+
+        <span className="spader-brand-divider" />
+
+        <span className="spader-brand-name">
+          Spader
+        </span>
+
+        <span className="spader-brand-divider" />
+
+        <span
+          className="spader-document-name"
+          title={file.name}
+        >
+          {file.name}
+        </span>
+      </div>
+
+      <div className="spader-toolbar">
+        <button
+          type="button"
+          className="spader-find-button"
+          title="Find"
+        >
+          <span>
+            Find
+          </span>
+
+          <kbd className="spader-find-shortcut">
+            Ctrl F
+          </kbd>
+        </button>
+
+        <span className="spader-toolbar-divider" />
+
+        <div className="spader-toolbar-group">
+          <button
+            type="button"
+            onClick={onPrevious}
+            disabled={
+              pageNumber <= 1
+            }
+            className="spader-icon-button"
+            title="Previous page"
+            aria-label="Previous page"
+          >
+            ‹
+          </button>
+
+          <div className="spader-page-control">
+            <input
+              value={pageInput}
+              onChange={(event) =>
+                setPageInput(
+                  event.target.value,
+                )
+              }
+              onFocus={
+                onPageInputFocus
+              }
+              onBlur={
+                onPageInputBlur
+              }
+              onKeyDown={(event) => {
+                if (
+                  event.key ===
+                  "Enter"
+                ) {
+                  onCommitPage();
+
+                  event.currentTarget.blur();
+                }
+
+                if (
+                  event.key ===
+                  "Escape"
+                ) {
+                  setPageInput(
+                    String(
+                      pageNumber,
+                    ),
+                  );
+
+                  event.currentTarget.blur();
+                }
+              }}
+              inputMode="numeric"
+              aria-label="Page number"
+              className="spader-page-input"
+            />
+
+            <span className="spader-page-total">
+              / {numPages}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={
+              pageNumber >=
+              numPages
+            }
+            className="spader-icon-button"
+            title="Next page"
+            aria-label="Next page"
+          >
+            ›
+          </button>
+        </div>
+
+        <span className="spader-toolbar-divider" />
+
+        <div className="spader-toolbar-group spader-zoom">
+          <button
+            type="button"
+            onClick={onZoomOut}
+            className="spader-icon-button"
+            title="Zoom out"
+            aria-label="Zoom out"
+          >
+            −
+          </button>
+
+          <button
+            type="button"
+            onClick={onResetZoom}
+            className="spader-zoom-value"
+            title="Reset zoom"
+          >
+            {zoomPercent}%
+          </button>
+
+          <button
+            type="button"
+            onClick={onZoomIn}
+            className="spader-icon-button"
+            title="Zoom in"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+        </div>
+
+        <span className="spader-toolbar-spacer" />
+
+        <div
+          className="spader-mode"
+          role="group"
+          aria-label="Reading mode"
+        >
+          <button
+            type="button"
+            onClick={() =>
+              onReadingModeChange(
+                "page",
+              )
+            }
+            className={`spader-mode-button ${
               readingMode ===
               "page"
-                ? "bg-zinc-700 text-white"
-                : "text-zinc-400 hover:text-zinc-200"
-            }
-          `}
-        >
-          Page
-        </button>
+                ? "is-active"
+                : ""
+            }`}
+          >
+            Page
+          </button>
 
-        <button
-          onClick={() =>
-            onReadingModeChange(
-              "continuous",
-            )
-          }
-          className={`
-            rounded-md
-            px-3 py-1.5
-            text-sm
-            transition
-            ${
+          <button
+            type="button"
+            onClick={() =>
+              onReadingModeChange(
+                "continuous",
+              )
+            }
+            className={`spader-mode-button ${
               readingMode ===
               "continuous"
-                ? "bg-zinc-700 text-white"
-                : "text-zinc-400 hover:text-zinc-200"
-            }
-          `}
+                ? "is-active"
+                : ""
+            }`}
+          >
+            Continuous
+          </button>
+        </div>
+
+        <button
+          type="button"
+          className="spader-icon-button"
+          title="Settings"
+          aria-label="Settings"
         >
-          Continuous
+          ⚙
         </button>
       </div>
-    </div>
+    </header>
   );
 }
 

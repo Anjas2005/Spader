@@ -1,4 +1,6 @@
-import type { RefObject } from "react";
+import type {
+  RefObject,
+} from "react";
 
 import type {
   PDFDocumentProxy,
@@ -11,38 +13,98 @@ export type ReadingMode =
 
 export interface PDFRendererProps {
   file: File;
-  scale?: number;
+  onBack: () => void;
 }
 
-export interface PdfRendererRefs {
-  viewerRef: RefObject<HTMLDivElement | null>;
+export interface PdfPageProps {
+  pageNumber: number;
 
-  canvasRefs: RefObject<
-    (HTMLCanvasElement | null)[]
+  canvasRef: (
+    element: HTMLCanvasElement | null,
+  ) => void;
+
+  pageContainerRef: (
+    element: HTMLDivElement | null,
+  ) => void;
+
+  minHeight?: number;
+}
+
+export interface UsePdfDocumentOptions {
+  file: File;
+}
+
+export interface UsePdfScaleOptions {
+  viewerRef: RefObject<
+    HTMLDivElement | null
   >;
 
-  pageContainerRefs: RefObject<
-    (HTMLDivElement | null)[]
-  >;
-
-  renderTasks: RefObject<
-    (RenderTask | null)[]
-  >;
+  pdf: PDFDocumentProxy | null;
 }
 
 export interface UsePdfRendererOptions {
   pdf: PDFDocumentProxy | null;
-  scale: number;
 
-  viewerRef: RefObject<HTMLDivElement | null>;
+  scale: number;
 
   canvasRefs: RefObject<
     (HTMLCanvasElement | null)[]
   >;
 
-  pageContainerRefs: RefObject<
-    (HTMLDivElement | null)[]
+  estimatedPageHeight: number;
+}
+
+export interface PdfToolbarProps {
+  file: File;
+
+  pageNumber: number;
+  numPages: number;
+
+  pageInput: string;
+
+  setPageInput: (
+    value: string,
+  ) => void;
+
+  onPageInputFocus: () => void;
+
+  onPageInputBlur: () => void;
+
+  onCommitPage: () => void;
+
+  onPrevious: () => void;
+
+  onNext: () => void;
+
+  zoomPercent: number;
+
+  onZoomIn: () => void;
+
+  onZoomOut: () => void;
+
+  onResetZoom: () => void;
+
+  readingMode: ReadingMode;
+
+  onReadingModeChange: (
+    mode: ReadingMode,
+  ) => void;
+
+  onBack: () => void;
+}
+
+export interface PdfRendererState {
+  renderTasks: RefObject<
+    (RenderTask | null)[]
   >;
 
-  estimatedPageHeight: number;
+  renderVersion: RefObject<number>;
+
+  renderedPages: RefObject<
+    Set<number>
+  >;
+
+  pageHeights: RefObject<
+    (number | undefined)[]
+  >;
 }

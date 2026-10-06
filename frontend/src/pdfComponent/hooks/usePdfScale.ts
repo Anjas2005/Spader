@@ -1,205 +1,276 @@
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
 import type {
-  PDFDocumentProxy,
-} from "pdfjs-dist";
+  UsePdfScaleOptions,
+} from "../pdfTypes";
 
-export const MIN_SCALE = 0.5;
-export const MAX_SCALE = 5;
-export const ZOOM_STEP = 0.25;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.1;
 
-interface UsePdfScaleOptions {
-  pdf: PDFDocumentProxy | null;
-
-  viewerRef: React.RefObject<
-    HTMLDivElement | null
-  >;
-
-  initialScale?: number;
-}
+const INITIAL_PAGE_WIDTH_RATIO = 0.75;
 
 export function usePdfScale({
-  pdf,
   viewerRef,
-  initialScale,
+  pdf,
 }: UsePdfScaleOptions) {
-  const [scale, setScale] =
-    useState(initialScale ?? 1);
+  const [viewerWidth, setViewerWidth] =
+    useState(0);
 
-  const [userZoomed, setUserZoomed] =
-    useState(false);
+  const [fitScale, setFitScale] =
+    useState(1);
 
-  const calculateFitScale =
-    async () => {
-      if (
-        !pdf ||
-        !viewerRef.current
-      ) {
-        return undefined;
-      }
+  const [zoom, setZoom] =
+    useState(1);
 
-      const page =
-        await pdf.getPage(1);
+  const [pageAspectRatio, setPageAspectRatio] =
+    useState(1.414);
 
-      const viewport =
-        page.getViewport({
-          scale: 1,
-        });
+  const [pageSize, setPageSize] =
+    useState<{
+      width: number;
+      height: number;
+    } | null>(null);
 
-      const availableWidth =
-        Math.max(
-          viewerRef.current.clientWidth -
-            48,
-          100,
-        );
+  /*
+   * Measure the actual PDF viewer.
+   */
+  useEffect(() => {
+    const viewer =
+      viewerRef.current;
 
-      const targetWidth =
-        availableWidth * 0.75;
+    if (!viewer) {
+      return;
+    }
 
-      const calculatedScale =
-        targetWidth /
-        viewport.width;
-
-      return Math.min(
-        Math.max(
-          calculatedScale,
-          MIN_SCALE,
-        ),
-        MAX_SCALE,
+    const updateWidth = () => {
+      setViewerWidth(
+        viewer.clientWidth,
       );
     };
 
+    updateWidth();
+
+    const observer =
+      new ResizeObserver(
+        updateWidth,
+      );
+
+    observer.observe(viewer);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [viewerRef]);
+
   /*
-   * Initial automatic fit.
+   * Calculate the scale required for the PDF to occupy
+   * approximately 75% of the usable viewer width.
    */
   useEffect(() => {
     if (
       !pdf ||
-      initialScale !== undefined ||
-      userZoomed
+      viewerWidth <= 0
     ) {
       return;
     }
 
     let cancelled = false;
 
-    const updateScale = async () => {
-      try {
-        const calculatedScale =
-          await calculateFitScale();
+    pdf
+      .getPage(1)
+      .then((page) => {
+        if (cancelled) {
+          return;
+        }
+
+        const viewport =
+          page.getViewport({
+            scale: 1,
+          });
 
         if (
-          cancelled ||
-          calculatedScale === undefined
+          viewport.width <= 0 ||
+          viewport.height <= 0
         ) {
           return;
         }
 
-        setScale(calculatedScale);
-      } catch (err) {
-        if (!cancelled) {
-          console.error(
-            "Could not calculate PDF scale:",
-            err,
-          );
-        }
-      }
-    };
+        setPageSize({
+          width: viewport.width,
+          height: viewport.height,
+        });
 
-    updateScale();
+        setPageAspectRatio(
+          viewport.height /
+            viewport.width,
+        );
+
+        /*
+         * PdfRenderer has 24px padding on each side.
+         */
+        const availableWidth =
+          Math.max(
+            viewerWidth - 48,
+            100,
+          );
+
+        const targetWidth =
+          availableWidth *
+          INITIAL_PAGE_WIDTH_RATIO;
+
+        const calculatedFitScale =
+          targetWidth /
+          viewport.width;
+
+        setFitScale(
+          calculatedFitScale,
+        );
+      })
+      .catch(() => {});
 
     return () => {
       cancelled = true;
     };
   }, [
     pdf,
-    initialScale,
+    viewerWidth,
   ]);
 
   /*
-   * Recalculate fit when the window changes size.
+   * Defensive maximum based on actual canvas dimensions.
+   *
+   * This is intentionally simple. The user-facing zoom ceiling
+   * remains 300%, but the renderer independently refuses an
+   * unsafe canvas.
    */
-  useEffect(() => {
-    if (
-      !pdf ||
-      initialScale !== undefined
-    ) {
-      return;
-    }
+  const safeMaxZoom =
+    useMemo(() => {
+      if (!pageSize) {
+        return MAX_ZOOM;
+      }
 
-    const handleResize =
-      async () => {
-        if (userZoomed) {
-          return;
-        }
+      const devicePixelRatio =
+        typeof window !== "undefined"
+          ? window.devicePixelRatio || 1
+          : 1;
 
-        try {
-          const calculatedScale =
-            await calculateFitScale();
+      const maxCanvasDimension =
+        8192;
 
-          if (
-            calculatedScale ===
-            undefined
-          ) {
-            return;
-          }
+      const widthLimit =
+        maxCanvasDimension /
+        (
+          pageSize.width *
+          devicePixelRatio *
+          Math.max(fitScale, 0.0001)
+        );
 
-          setScale(
-            calculatedScale,
-          );
-        } catch (err) {
-          console.error(
-            "Could not recalculate PDF scale:",
-            err,
-          );
-        }
-      };
+      const heightLimit =
+        maxCanvasDimension /
+        (
+          pageSize.height *
+          devicePixelRatio *
+          Math.max(fitScale, 0.0001)
+        );
 
-    window.addEventListener(
-      "resize",
-      handleResize,
-    );
-
-    return () => {
-      window.removeEventListener(
-        "resize",
-        handleResize,
+      return Math.min(
+        MAX_ZOOM,
+        widthLimit,
+        heightLimit,
       );
-    };
-  }, [
-    pdf,
-    initialScale,
-    userZoomed,
-  ]);
+    }, [
+      fitScale,
+      pageSize,
+    ]);
+
+  useEffect(() => {
+    setZoom((value) =>
+      Math.min(
+        Math.max(
+          value,
+          MIN_ZOOM,
+        ),
+        Math.max(
+          MIN_ZOOM,
+          safeMaxZoom,
+        ),
+      ),
+    );
+  }, [safeMaxZoom]);
 
   const zoomIn = () => {
-    setUserZoomed(true);
-
-    setScale((current) =>
+    setZoom((value) =>
       Math.min(
-        current + ZOOM_STEP,
-        MAX_SCALE,
+        Math.max(
+          MIN_ZOOM,
+          safeMaxZoom,
+        ),
+        Number(
+          (
+            value +
+            ZOOM_STEP
+          ).toFixed(2),
+        ),
       ),
     );
   };
 
   const zoomOut = () => {
-    setUserZoomed(true);
-
-    setScale((current) =>
+    setZoom((value) =>
       Math.max(
-        current - ZOOM_STEP,
-        MIN_SCALE,
+        MIN_ZOOM,
+        Number(
+          (
+            value -
+            ZOOM_STEP
+          ).toFixed(2),
+        ),
       ),
     );
   };
 
+  const resetZoom = () => {
+    setZoom(1);
+  };
+
+  /*
+   * This is the actual scale sent to PDF.js.
+   *
+   * Initial state:
+   *
+   *   fitScale × 1
+   *
+   * Therefore the PDF initially occupies approximately 75%
+   * of the available viewer width.
+   */
+  const scale =
+    fitScale * zoom;
+
   return {
     scale,
+
+    zoomPercent:
+      Math.round(
+        zoom * 100,
+      ),
+
+    zoom,
+
+    fitScale,
+
+    viewerWidth,
+
+    pageAspectRatio,
+
+    maxZoom: safeMaxZoom,
+
     zoomIn,
     zoomOut,
+    resetZoom,
   };
 }

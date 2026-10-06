@@ -1,6 +1,9 @@
 export function getPageHeight(
   page: number,
-  pageHeights: (number | undefined)[],
+  pageHeights: (
+    | number
+    | undefined
+  )[],
   estimatedPageHeight: number,
 ) {
   return (
@@ -9,33 +12,26 @@ export function getPageHeight(
   );
 }
 
-export function getPageSlotHeight(
-  page: number,
-  pageHeights: (number | undefined)[],
-  estimatedPageHeight: number,
-) {
-  return (
-    getPageHeight(
-      page,
-      pageHeights,
-      estimatedPageHeight,
-    ) + 24
-  );
-}
-
 export function getPageOffset(
   page: number,
-  pageHeights: (number | undefined)[],
+  pageHeights: (
+    | number
+    | undefined
+  )[],
   estimatedPageHeight: number,
 ) {
-  let offset = 24;
+  if (page <= 1) {
+    return 0;
+  }
+
+  let offset = 0;
 
   for (
     let current = 1;
     current < page;
     current++
   ) {
-    offset += getPageSlotHeight(
+    offset += getPageHeight(
       current,
       pageHeights,
       estimatedPageHeight,

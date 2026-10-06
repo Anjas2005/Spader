@@ -1,48 +1,28 @@
-interface PdfPageProps {
-  pageNumber: number;
-
-  canvasRef: (
-    canvas: HTMLCanvasElement | null,
-  ) => void;
-
-  containerRef: (
-    container: HTMLDivElement | null,
-  ) => void;
-
-  minHeight?: number;
-
-  onClick?: () => void;
-}
+import type {
+  PdfPageProps,
+} from "./pdfTypes";
 
 function PdfPage({
   pageNumber,
   canvasRef,
-  containerRef,
+  pageContainerRef,
   minHeight,
-  onClick,
 }: PdfPageProps) {
   return (
     <div
-      ref={containerRef}
-      onClick={onClick}
-      data-page={pageNumber}
-      className="
-        flex
-        w-fit
-        cursor-pointer
-        items-start
-        justify-center
-      "
+      ref={pageContainerRef}
+      data-page-number={pageNumber}
+      className="spader-pdf-page"
       style={{
-        minHeight,
+        minHeight:
+          minHeight
+            ? `${minHeight}px`
+            : undefined,
       }}
     >
       <canvas
         ref={canvasRef}
-        className="
-          block
-          shadow-2xl
-        "
+        className="spader-pdf-canvas"
       />
     </div>
   );

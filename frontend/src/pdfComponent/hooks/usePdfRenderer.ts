@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useRef,
 } from "react";
 
@@ -16,19 +17,18 @@ import type {
   UsePdfRendererOptions,
 } from "../pdfTypes";
 
-const NEARBY_PAGE_COUNT = 3;
+const MAX_CANVAS_DIMENSION = 8192;
 
 export function usePdfRenderer({
   pdf,
   scale,
   canvasRefs,
-  // pageContainerRefs,
   estimatedPageHeight,
 }: UsePdfRendererOptions) {
   const renderTasks =
-    useRef<(RenderTask | null)[]>(
-      [],
-    );
+    useRef<
+      (RenderTask | null)[]
+    >([]);
 
   const renderVersion =
     useRef(0);
@@ -38,493 +38,615 @@ export function usePdfRenderer({
       new Set(),
     );
 
-  const renderingPages =
-    useRef<Set<number>>(
-      new Set(),
-    );
-
-  const pageQueue =
-    useRef<number[]>([]);
-
-  const schedulerRunning =
-    useRef(false);
-
   const pageHeights =
-    useRef<(number | undefined)[]>(
-      [],
-    );
+    useRef<
+      (number | undefined)[]
+    >([]);
 
   /*
-   * ----------------------------------------------------
-   * Reset / cancellation
-   * ----------------------------------------------------
+   * Render a single PDF page.
    */
-
-  const cancelRendering = () => {
-    renderVersion.current += 1;
-
-    for (
-      const task of renderTasks.current
-    ) {
-      task?.cancel();
-    }
-
-    renderTasks.current = [];
-
-    pageQueue.current = [];
-
-    renderingPages.current.clear();
-
-    schedulerRunning.current =
-      false;
-  };
-
-  /*
-   * ----------------------------------------------------
-   * Page geometry
-   * ----------------------------------------------------
-   */
-
-  const getPageHeight = (
-    page: number,
-  ) => {
-    return getPageHeightUtil(
-      page,
-      pageHeights.current,
-      estimatedPageHeight,
-    );
-  };
-
-  const getPageOffset = (
-    page: number,
-  ) => {
-    return getPageOffsetUtil(
-      page,
-      pageHeights.current,
-      estimatedPageHeight,
-    );
-  };
-
-  /*
-   * ----------------------------------------------------
-   * Render one page
-   * ----------------------------------------------------
-   */
-
-  const renderPage = async (
-    pdfDocument: PDFDocumentProxy,
-    pageNumberToRender: number,
-    canvas: HTMLCanvasElement,
-    canvasIndex: number,
-    version: number,
-  ) => {
-    if (
-      version !==
-      renderVersion.current
-    ) {
-      return false;
-    }
-
-    /*
-     * Never reuse a canvas while its previous
-     * render is still running.
-     */
-    const previousTask =
-      renderTasks.current[
-        canvasIndex
-      ];
-
-    if (previousTask) {
-      previousTask.cancel();
-
-      try {
-        await previousTask.promise;
-      } catch (err) {
+  const renderPage =
+    useCallback(
+      async (
+        pdfDocument: PDFDocumentProxy,
+        pageNumberToRender: number,
+        canvas: HTMLCanvasElement,
+        canvasIndex: number,
+        version: number,
+      ) => {
         if (
-          !(
-            err instanceof Error &&
-            err.name ===
-              "RenderingCancelledException"
-          )
+          version !==
+          renderVersion.current
         ) {
-          console.error(
-            "Previous PDF render failed:",
-            err,
-          );
+          return false;
         }
-      }
 
-      if (
-        renderTasks.current[
-          canvasIndex
-        ] === previousTask
-      ) {
-        renderTasks.current[
-          canvasIndex
-        ] = null;
-      }
-    }
+        /*
+         * Cancel any previous render using
+         * this canvas.
+         */
+        const previousTask =
+          renderTasks.current[
+            canvasIndex
+          ];
 
-    if (
-      version !==
-      renderVersion.current
-    ) {
-      return false;
-    }
+        if (previousTask) {
+          previousTask.cancel();
 
-    const page =
-      await pdfDocument.getPage(
-        pageNumberToRender,
-      );
+          try {
+            await previousTask.promise;
+          } catch (error) {
+            if (
+              !(
+                error instanceof
+                  Error &&
+                error.name ===
+                  "RenderingCancelledException"
+              )
+            ) {
+              console.error(
+                "Previous PDF render failed:",
+                error,
+              );
+            }
+          }
 
-    if (
-      version !==
-      renderVersion.current
-    ) {
-      return false;
-    }
+          if (
+            renderTasks.current[
+              canvasIndex
+            ] === previousTask
+          ) {
+            renderTasks.current[
+              canvasIndex
+            ] = null;
+          }
+        }
 
-    const viewport =
-      page.getViewport({
-        scale,
-      });
-
-    /*
-     * Save the real page height.
-     */
-    pageHeights.current[
-      pageNumberToRender - 1
-    ] = viewport.height;
-
-    const context =
-      canvas.getContext("2d");
-
-    if (!context) {
-      return false;
-    }
-
-    canvas.width =
-      Math.floor(viewport.width);
-
-    canvas.height =
-      Math.floor(viewport.height);
-
-    context.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-    );
-
-    const renderTask =
-      page.render({
-        canvas,
-        canvasContext: context,
-        viewport,
-      });
-
-    renderTasks.current[
-      canvasIndex
-    ] = renderTask;
-
-    try {
-      await renderTask.promise;
-
-      if (
-        version !==
-        renderVersion.current
-      ) {
-        return false;
-      }
-
-      renderedPages.current.add(
-        pageNumberToRender,
-      );
-
-      return true;
-    } catch (err) {
-      if (
-        err instanceof Error &&
-        err.name ===
-          "RenderingCancelledException"
-      ) {
-        return false;
-      }
-
-      if (
-        version ===
-        renderVersion.current
-      ) {
-        console.error(
-          `PDF page ${pageNumberToRender} render failed:`,
-          err,
-        );
-      }
-
-      return false;
-    } finally {
-      if (
-        renderTasks.current[
-          canvasIndex
-        ] === renderTask
-      ) {
-        renderTasks.current[
-          canvasIndex
-        ] = null;
-      }
-    }
-  };
-
-  /*
-   * ----------------------------------------------------
-   * Queue
-   * ----------------------------------------------------
-   */
-
-  const queuePage = (
-    page: number,
-  ) => {
-    if (!pdf) {
-      return;
-    }
-
-    if (
-      page < 1 ||
-      page > pdf.numPages
-    ) {
-      return;
-    }
-
-    if (
-      renderedPages.current.has(
-        page,
-      )
-    ) {
-      return;
-    }
-
-    if (
-      renderingPages.current.has(
-        page,
-      )
-    ) {
-      return;
-    }
-
-    if (
-      pageQueue.current.includes(
-        page,
-      )
-    ) {
-      return;
-    }
-
-    pageQueue.current.push(page);
-  };
-
-  /*
-   * ----------------------------------------------------
-   * Scheduler
-   * ----------------------------------------------------
-   */
-
-  const runContinuousScheduler =
-    async (
-      version: number,
-    ) => {
-      if (
-        schedulerRunning.current
-      ) {
-        return;
-      }
-
-      schedulerRunning.current =
-        true;
-
-      try {
-        while (
-          pageQueue.current.length >
-            0 &&
-          version ===
-            renderVersion.current
+        if (
+          version !==
+          renderVersion.current
         ) {
-          const page =
-            pageQueue.current.shift();
+          return false;
+        }
+
+        const page =
+          await pdfDocument.getPage(
+            pageNumberToRender,
+          );
+
+        if (
+          version !==
+          renderVersion.current
+        ) {
+          return false;
+        }
+
+        const viewport =
+          page.getViewport({
+            scale,
+          });
+
+        pageHeights.current[
+          pageNumberToRender - 1
+        ] = viewport.height;
+
+        const context =
+          canvas.getContext("2d");
+
+        if (!context) {
+          return false;
+        }
+
+        const outputScale =
+          window.devicePixelRatio ||
+          1;
+
+        const pixelWidth =
+          Math.ceil(
+            viewport.width *
+              outputScale,
+          );
+
+        const pixelHeight =
+          Math.ceil(
+            viewport.height *
+              outputScale,
+          );
+
+        /*
+         * Prevent creating a canvas that
+         * exceeds browser/GPU limits.
+         */
+        if (
+          pixelWidth >
+            MAX_CANVAS_DIMENSION ||
+          pixelHeight >
+            MAX_CANVAS_DIMENSION
+        ) {
+          console.warn(
+            `PDF page ${pageNumberToRender} is too large to render at ${Math.round(
+              scale * 100,
+            )}%.`,
+          );
+
+          return false;
+        }
+
+        /*
+         * Configure canvas for the new viewport.
+         */
+        canvas.width =
+          pixelWidth;
+
+        canvas.height =
+          pixelHeight;
+
+        canvas.style.width =
+          `${Math.round(
+            viewport.width,
+          )}px`;
+
+        canvas.style.height =
+          `${Math.round(
+            viewport.height,
+          )}px`;
+
+        context.clearRect(
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        );
+
+        const transform =
+          outputScale !== 1
+            ? [
+                outputScale,
+                0,
+                0,
+                outputScale,
+                0,
+                0,
+              ]
+            : undefined;
+
+        /*
+         * Start PDF.js rendering.
+         */
+        const renderTask =
+          page.render({
+            canvas,
+            canvasContext: context,
+            viewport,
+            transform,
+          });
+
+        renderTasks.current[
+          canvasIndex
+        ] = renderTask;
+
+        try {
+          await renderTask.promise;
 
           if (
-            page === undefined
+            version !==
+            renderVersion.current
           ) {
-            break;
+            return false;
           }
-
-          if (
-            renderedPages.current.has(
-              page,
-            )
-          ) {
-            continue;
-          }
-
-          const canvas =
-            canvasRefs.current[
-              page - 1
-            ];
 
           /*
-           * The DOM may not have created the
-           * canvas yet.
+           * Only mark the page rendered after
+           * the render actually completed.
            */
-          if (!canvas) {
-            pageQueue.current.unshift(
-              page,
-            );
+          renderedPages.current.add(
+            pageNumberToRender,
+          );
 
-            await new Promise<void>(
-              (resolve) => {
-                requestAnimationFrame(
-                  () => resolve(),
-                );
-              },
-            );
-
-            continue;
+          return true;
+        } catch (error) {
+          if (
+            error instanceof
+              Error &&
+            error.name ===
+              "RenderingCancelledException"
+          ) {
+            return false;
           }
 
-          renderingPages.current.add(
-            page,
-          );
+          if (
+            version ===
+            renderVersion.current
+          ) {
+            console.error(
+              `PDF page ${pageNumberToRender} render failed:`,
+              error,
+            );
+          }
 
-          await renderPage(
-            pdf!,
-            page,
-            canvas,
-            page - 1,
-            version,
-          );
-
-          renderingPages.current.delete(
-            page,
-          );
+          return false;
+        } finally {
+          if (
+            renderTasks.current[
+              canvasIndex
+            ] === renderTask
+          ) {
+            renderTasks.current[
+              canvasIndex
+            ] = null;
+          }
         }
-      } finally {
-        schedulerRunning.current =
-          false;
-      }
-    };
+      },
+      [scale],
+    );
 
   /*
-   * ----------------------------------------------------
-   * Render pages around current page
-   * ----------------------------------------------------
+   * Clear one page.
    */
+  const clearPage =
+    useCallback(
+      (pageNumber: number) => {
+        const index =
+          pageNumber - 1;
 
-  const renderAroundPage = (
-    targetPage: number,
-    version: number,
-  ) => {
-    if (!pdf) {
-      return;
-    }
+        const task =
+          renderTasks.current[
+            index
+          ];
 
-    const nearbyPages: number[] =
-      [];
+        if (task) {
+          task.cancel();
 
-    /*
-     * Target page gets priority.
-     */
-    queuePage(targetPage);
+          renderTasks.current[
+            index
+          ] = null;
+        }
 
-    for (
-      let distance = 1;
-      distance <=
-      NEARBY_PAGE_COUNT;
-      distance++
-    ) {
-      const previous =
-        targetPage - distance;
+        const canvas =
+          canvasRefs.current[
+            index
+          ];
 
-      const next =
-        targetPage + distance;
+        if (canvas) {
+          const context =
+            canvas.getContext(
+              "2d",
+            );
 
-      if (
-        previous >= 1
-      ) {
-        nearbyPages.push(
-          previous,
+          if (context) {
+            context.clearRect(
+              0,
+              0,
+              canvas.width,
+              canvas.height,
+            );
+          }
+
+          /*
+           * Release the backing pixel buffer.
+           */
+          canvas.width = 0;
+          canvas.height = 0;
+
+          canvas.style.width = "";
+          canvas.style.height = "";
+        }
+
+        renderedPages.current.delete(
+          pageNumber,
         );
-      }
+      },
+      [canvasRefs],
+    );
 
-      if (
-        next <= pdf.numPages
-      ) {
-        nearbyPages.push(next);
-      }
-    }
+  /*
+   * Clear rendered pages outside the
+   * requested window.
+   */
+  const clearPagesOutsideWindow =
+    useCallback(
+      (
+        currentPage: number,
+        radius: number,
+      ) => {
+        if (!pdf) {
+          return;
+        }
 
-    for (
-      const page of nearbyPages
-    ) {
-      queuePage(page);
-    }
+        const start =
+          Math.max(
+            1,
+            currentPage - radius,
+          );
 
-    void runContinuousScheduler(
-      version,
-    ).then(() => {
-      if (
-        version !==
-        renderVersion.current
-      ) {
-        return;
-      }
+        const end =
+          Math.min(
+            pdf.numPages,
+            currentPage + radius,
+          );
+
+        for (
+          const page of
+            renderedPages.current
+        ) {
+          if (
+            page < start ||
+            page > end
+          ) {
+            clearPage(page);
+          }
+        }
+      },
+      [
+        clearPage,
+        pdf,
+      ],
+    );
+
+  /*
+   * INVALIDATE CURRENT RENDER STATE.
+   *
+   * This is intentionally different from
+   * moving to another page.
+   *
+   * It is used when the existing canvases
+   * are no longer valid:
+   *
+   *   - reading mode changes
+   *   - zoom/scale changes
+   *   - PDF changes
+   *
+   * We invalidate the cache without trying
+   * to manipulate the DOM. React owns the
+   * canvas lifecycle.
+   */
+  const invalidateRendering =
+    useCallback(() => {
+      /*
+       * Make every currently running render
+       * obsolete.
+       */
+      renderVersion.current += 1;
 
       /*
-       * Queue the remaining document after
-       * nearby pages have been processed.
+       * Cancel active PDF.js render tasks.
        */
       for (
-        let distance =
-          NEARBY_PAGE_COUNT + 1;
-        distance <=
-        Math.max(
-          targetPage - 1,
-          pdf.numPages -
-            targetPage,
-        );
-        distance++
+        const task of
+          renderTasks.current
       ) {
-        const previous =
-          targetPage - distance;
-
-        const next =
-          targetPage + distance;
-
-        if (
-          previous >= 1
-        ) {
-          queuePage(previous);
-        }
-
-        if (
-          next <= pdf.numPages
-        ) {
-          queuePage(next);
-        }
-
-        if (
-          distance % 10 ===
-          0
-        ) {
-          void runContinuousScheduler(
-            version,
-          );
-        }
+        task?.cancel();
       }
 
-      void runContinuousScheduler(
-        version,
-      );
-    });
-  };
+      renderTasks.current = [];
+
+      /*
+       * Most important part:
+       *
+       * Do NOT let the renderer believe that
+       * pages are still rendered.
+       */
+      renderedPages.current.clear();
+    }, []);
+
+  /*
+   * Render a small window around a page.
+   *
+   * Target page is always rendered first.
+   */
+  const renderAroundPage =
+    useCallback(
+      (
+        targetPage: number,
+        radius: number,
+      ) => {
+        if (!pdf) {
+          return;
+        }
+
+        const currentPage =
+          Math.min(
+            Math.max(
+              targetPage,
+              1,
+            ),
+            pdf.numPages,
+          );
+
+        /*
+         * Start a new render generation.
+         */
+        renderVersion.current += 1;
+
+        const version =
+          renderVersion.current;
+
+        /*
+         * Cancel currently running renders.
+         */
+        for (
+          const task of
+            renderTasks.current
+        ) {
+          task?.cancel();
+        }
+
+        renderTasks.current = [];
+
+        /*
+         * Remove rendered pages that are
+         * outside the new window.
+         */
+        clearPagesOutsideWindow(
+          currentPage,
+          radius,
+        );
+
+        /*
+         * Build render order:
+         *
+         * current
+         * previous
+         * next
+         * previous
+         * next
+         * ...
+         */
+        const pages: number[] = [
+          currentPage,
+        ];
+
+        for (
+          let distance = 1;
+          distance <= radius;
+          distance++
+        ) {
+          const previous =
+            currentPage -
+            distance;
+
+          const next =
+            currentPage +
+            distance;
+
+          if (
+            previous >= 1
+          ) {
+            pages.push(previous);
+          }
+
+          if (
+            next <=
+            pdf.numPages
+          ) {
+            pages.push(next);
+          }
+        }
+
+        /*
+         * Render one page at a time.
+         */
+        const renderWindow =
+          async () => {
+            for (
+              const pageNumber of pages
+            ) {
+              if (
+                version !==
+                renderVersion.current
+              ) {
+                return;
+              }
+
+              /*
+               * If this page is already
+               * valid, reuse it.
+               */
+              if (
+                renderedPages.current.has(
+                  pageNumber,
+                )
+              ) {
+                continue;
+              }
+
+              let canvas =
+                canvasRefs.current[
+                  pageNumber - 1
+                ];
+
+              /*
+               * React may not have mounted
+               * the canvas yet.
+               */
+              if (!canvas) {
+                await new Promise<void>(
+                  (resolve) => {
+                    requestAnimationFrame(
+                      () =>
+                        resolve(),
+                    );
+                  },
+                );
+
+                if (
+                  version !==
+                  renderVersion.current
+                ) {
+                  return;
+                }
+
+                canvas =
+                  canvasRefs.current[
+                    pageNumber - 1
+                  ];
+              }
+
+              if (!canvas) {
+                continue;
+              }
+
+              await renderPage(
+                pdf,
+                pageNumber,
+                canvas,
+                pageNumber - 1,
+                version,
+              );
+            }
+          };
+
+        void renderWindow();
+      },
+      [
+        canvasRefs,
+        clearPagesOutsideWindow,
+        pdf,
+        renderPage,
+      ],
+    );
+
+  /*
+   * Cancel all rendering.
+   */
+  const cancelRendering =
+    useCallback(() => {
+      renderVersion.current += 1;
+
+      for (
+        const task of
+          renderTasks.current
+      ) {
+        task?.cancel();
+      }
+
+      renderTasks.current = [];
+
+      renderedPages.current.clear();
+    }, []);
+
+  const getPageHeight =
+    useCallback(
+      (page: number) =>
+        getPageHeightUtil(
+          page,
+          pageHeights.current,
+          estimatedPageHeight,
+        ),
+      [estimatedPageHeight],
+    );
+
+  const getPageOffset =
+    useCallback(
+      (page: number) =>
+        getPageOffsetUtil(
+          page,
+          pageHeights.current,
+          estimatedPageHeight,
+        ),
+      [estimatedPageHeight],
+    );
 
   return {
     renderTasks,
@@ -534,9 +656,16 @@ export function usePdfRenderer({
 
     renderPage,
     renderAroundPage,
-    runContinuousScheduler,
-    queuePage,
+
+    /*
+     * New lifecycle function.
+     */
+    invalidateRendering,
+
     cancelRendering,
+
+    clearPage,
+    clearPagesOutsideWindow,
 
     getPageHeight,
     getPageOffset,

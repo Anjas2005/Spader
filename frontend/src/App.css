@@ -1,0 +1,649 @@
+/* =========================================================
+   READER ROOT
+   ========================================================= */
+
+.spader-reader {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #fbf9f5;
+  color: #1b1c1a;
+}
+
+
+/* =========================================================
+   TOP BAR
+   ========================================================= */
+
+.spader-topbar {
+  position: relative;
+  z-index: 20;
+
+  height: 48px;
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 16px;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid #c0c8cc;
+}
+
+
+/* =========================================================
+   BRAND
+   ========================================================= */
+
+.spader-brand {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.spader-back-button {
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 0 7px;
+
+  border: 0;
+  border-radius: 5px;
+
+  background: transparent;
+  color: #40484c;
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.spader-back-button:hover {
+  background: #f5f3ef;
+  color: #00475a;
+}
+
+.spader-brand-divider {
+  width: 1px;
+  height: 18px;
+
+  flex: 0 0 auto;
+
+  background: #c0c8cc;
+}
+
+.spader-brand-name {
+  flex: 0 0 auto;
+
+  font-family: "Literata", serif;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  color: #00475a;
+}
+
+.spader-document-name {
+  min-width: 0;
+  max-width: 300px;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  font-size: 13px;
+
+  color: #40484c;
+}
+
+
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
+
+.spader-toolbar {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+}
+
+.spader-find-button {
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 0 9px;
+
+  border: 1px solid transparent;
+  border-radius: 5px;
+
+  background: transparent;
+
+  color: #40484c;
+
+  font-size: 12px;
+
+  cursor: pointer;
+}
+
+.spader-find-button:hover {
+  background: #f5f3ef;
+  border-color: #c0c8cc;
+}
+
+.spader-find-shortcut {
+  padding: 2px 5px;
+
+  border: 1px solid #c0c8cc;
+  border-radius: 3px;
+
+  background: #f5f3ef;
+
+  font-family: "JetBrains Mono", monospace;
+
+  font-size: 10px;
+
+  color: #70787c;
+}
+
+.spader-toolbar-divider {
+  width: 1px;
+  height: 20px;
+
+  flex: 0 0 auto;
+
+  background: #c0c8cc;
+}
+
+.spader-toolbar-group {
+  display: flex;
+  align-items: center;
+
+  gap: 2px;
+}
+
+.spader-icon-button {
+  width: 30px;
+  height: 30px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid transparent;
+  border-radius: 5px;
+
+  background: transparent;
+
+  color: #40484c;
+
+  font-size: 18px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.spader-icon-button:hover:not(:disabled) {
+  background: #f5f3ef;
+  border-color: #c0c8cc;
+  color: #00475a;
+}
+
+.spader-icon-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.spader-page-control {
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 5px;
+
+  border: 1px solid #c0c8cc;
+  border-radius: 5px;
+
+  background: #ffffff;
+}
+
+.spader-page-input {
+  width: 42px;
+
+  padding: 0;
+
+  border: 0;
+  outline: none;
+
+  background: transparent;
+
+  text-align: right;
+
+  font-family: "JetBrains Mono", monospace;
+
+  font-size: 11px;
+
+  color: #1b1c1a;
+}
+
+.spader-page-total {
+  margin-left: 4px;
+
+  font-family: "JetBrains Mono", monospace;
+
+  font-size: 11px;
+
+  color: #70787c;
+}
+
+.spader-zoom {
+  gap: 2px;
+}
+
+.spader-zoom-value {
+  min-width: 48px;
+  height: 30px;
+
+  padding: 0 5px;
+
+  border: 0;
+  border-radius: 5px;
+
+  background: transparent;
+
+  color: #40484c;
+
+  font-family: "JetBrains Mono", monospace;
+
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+.spader-zoom-value:hover {
+  background: #f5f3ef;
+  color: #00475a;
+}
+
+.spader-toolbar-spacer {
+  width: 10px;
+}
+
+.spader-mode {
+  display: flex;
+  align-items: center;
+
+  padding: 2px;
+
+  border: 1px solid #c0c8cc;
+  border-radius: 6px;
+
+  background: #f5f3ef;
+}
+
+.spader-mode-button {
+  height: 26px;
+
+  padding: 0 9px;
+
+  border: 0;
+  border-radius: 4px;
+
+  background: transparent;
+
+  color: #70787c;
+
+  font-size: 11px;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.spader-mode-button:hover {
+  color: #00475a;
+}
+
+.spader-mode-button.is-active {
+  background: #ffffff;
+
+  color: #00475a;
+
+  box-shadow:
+    0 1px 3px
+      rgba(27, 28, 26, 0.08);
+}
+
+
+/* =========================================================
+   MAIN BODY
+   ========================================================= */
+
+.spader-reader-body {
+  min-width: 0;
+  min-height: 0;
+
+  flex: 1;
+
+  display: flex;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   PDF VIEWER
+   ========================================================= */
+
+.spader-pdf-viewer {
+  min-width: 0;
+  min-height: 0;
+
+  flex: 1;
+
+  overflow: auto;
+
+  padding: 24px;
+
+  background: #eae8e4;
+
+  scrollbar-width: thin;
+}
+
+
+/*
+ * This container represents the complete document.
+ *
+ * In Continuous mode, page wrappers remain in the DOM
+ * so the browser maintains correct scroll geometry.
+ *
+ * In Page mode, only the current page is mounted.
+ */
+.spader-pdf-document {
+  width: 100%;
+  min-height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 24px;
+}
+
+
+/*
+ * Individual page geometry.
+ *
+ * Do not constrain the width here.
+ * PDF.js controls the actual rendered dimensions.
+ */
+.spader-pdf-page-wrapper {
+  width: auto;
+  max-width: none;
+
+  flex: 0 0 auto;
+
+  margin: 0 auto;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 2px 12px
+      rgba(27, 28, 26, 0.08);
+}
+
+
+/*
+ * Page itself.
+ */
+.spader-pdf-page {
+  width: auto;
+
+  display: flex;
+  justify-content: center;
+
+  background: #ffffff;
+}
+
+
+/*
+ * PDF.js canvas.
+ *
+ * IMPORTANT:
+ *
+ * Do NOT use:
+ *
+ *   width: 100%;
+ *   max-width: 100%;
+ *
+ * PDF.js sets the exact CSS dimensions of the canvas
+ * based on the calculated PDF scale.
+ */
+.spader-pdf-canvas {
+  display: block;
+
+  width: auto;
+  max-width: none;
+
+  height: auto;
+
+  background: #ffffff;
+}
+
+
+/*
+ * When a page is outside the active rendering window,
+ * usePdfRenderer clears its canvas and sets:
+ *
+ *   canvas.width = 0
+ *   canvas.height = 0
+ *
+ * The canvas remains in the DOM so the page geometry
+ * remains stable in Continuous mode.
+ */
+.spader-pdf-canvas[width="0"],
+.spader-pdf-canvas[height="0"] {
+  display: block;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.spader-reader-loading {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #fbf9f5;
+
+  font-size: 13px;
+
+  color: #70787c;
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.spader-reader-error {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 12px;
+
+  padding: 24px;
+
+  background: #fbf9f5;
+
+  text-align: center;
+}
+
+.spader-reader-error h2 {
+  margin: 0;
+
+  font-family: "Literata", serif;
+
+  font-size: 20px;
+
+  color: #00475a;
+}
+
+.spader-reader-error p {
+  max-width: 600px;
+
+  margin: 0;
+
+  font-size: 13px;
+
+  color: #70787c;
+}
+
+.spader-primary-button {
+  padding: 8px 16px;
+
+  border: 0;
+  border-radius: 5px;
+
+  background: #00475a;
+
+  color: #ffffff;
+
+  font-size: 12px;
+
+  cursor: pointer;
+}
+
+.spader-primary-button:hover {
+  opacity: 0.9;
+}
+
+
+/* =========================================================
+   FOCUS STATES
+   ========================================================= */
+
+.spader-back-button:focus-visible,
+.spader-find-button:focus-visible,
+.spader-icon-button:focus-visible,
+.spader-mode-button:focus-visible,
+.spader-zoom-value:focus-visible,
+.spader-primary-button:focus-visible {
+  outline: 2px solid #36637e;
+  outline-offset: 2px;
+}
+
+.spader-page-input:focus-visible {
+  outline: none;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .spader-document-name {
+    max-width: 180px;
+  }
+
+  .spader-find-button {
+    display: none;
+  }
+}
+
+
+@media (max-width: 850px) {
+  .spader-brand-divider {
+    display: none;
+  }
+
+  .spader-document-name {
+    max-width: 180px;
+  }
+}
+
+
+@media (max-width: 650px) {
+  .spader-topbar {
+    padding: 0 8px;
+  }
+
+  .spader-document-name {
+    max-width: 120px;
+  }
+
+  .spader-toolbar-spacer {
+    display: none;
+  }
+
+  .spader-mode {
+    display: none;
+  }
+
+  .spader-pdf-viewer {
+    padding: 16px;
+  }
+
+  .spader-pdf-document {
+    gap: 16px;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .spader-brand-name {
+    display: none;
+  }
+
+  .spader-toolbar {
+    gap: 3px;
+  }
+
+  .spader-toolbar-divider {
+    display: none;
+  }
+
+  .spader-zoom {
+    display: none;
+  }
+
+  .spader-pdf-viewer {
+    padding: 12px;
+  }
+}
+

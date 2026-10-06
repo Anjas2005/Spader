@@ -3,119 +3,76 @@ import {
   useState,
 } from "react";
 
-import * as pdfjsLib from "pdfjs-dist";
-
-import type {
-  PDFDocumentProxy,
+import {
+  getDocument,
+  GlobalWorkerOptions,
+  type PDFDocumentProxy,
 } from "pdfjs-dist";
 
-interface UsePdfDocumentOptions {
-  file: File;
-  scale: number;
-}
+import workerSrc from "pdfjs-dist/build/pdf.worker.mjs?url";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  new URL(
-    "pdfjs-dist/build/pdf.worker.mjs",
-    import.meta.url,
-  ).toString();
+import type {
+  UsePdfDocumentOptions,
+} from "../pdfTypes";
+
+GlobalWorkerOptions.workerSrc =
+  workerSrc;
 
 export function usePdfDocument({
   file,
-  scale,
 }: UsePdfDocumentOptions) {
   const [pdf, setPdf] =
-    useState<PDFDocumentProxy | null>(null);
+    useState<PDFDocumentProxy | null>(
+      null,
+    );
 
   const [loading, setLoading] =
     useState(true);
 
   const [error, setError] =
-    useState<string | null>(null);
-
-  const [
-    estimatedPageHeight,
-    setEstimatedPageHeight,
-  ] = useState(800);
+    useState<unknown>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    let loadingTask:
-      | ReturnType<
-          typeof pdfjsLib.getDocument
-        >
-      | null = null;
+    setPdf(null);
+    setLoading(true);
+    setError(null);
 
-    const loadPDF = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        setPdf(null);
+    const objectUrl =
+      URL.createObjectURL(file);
 
-        const arrayBuffer =
-          await file.arrayBuffer();
+    const loadingTask =
+      getDocument({
+        url: objectUrl,
+      });
 
+    loadingTask.promise
+      .then((document) => {
         if (cancelled) {
           return;
         }
 
-        loadingTask =
-          pdfjsLib.getDocument({
-            data: arrayBuffer,
-          });
-
-        const loadedPdf =
-          await loadingTask.promise;
-
+        setPdf(document);
+        setLoading(false);
+      })
+      .catch((reason) => {
         if (cancelled) {
           return;
         }
 
-        /*
-         * Get page 1 so we have a reasonable
-         * height estimate for unrendered pages.
-         */
-        const firstPage =
-          await loadedPdf.getPage(1);
-
-        const viewport =
-          firstPage.getViewport({
-            scale: 1,
-          });
-
-        if (cancelled) {
-          return;
-        }
-
-        setEstimatedPageHeight(
-          viewport.height * scale,
-        );
-
-        setPdf(loadedPdf);
-      } catch (err) {
-        if (cancelled) {
-          return;
-        }
-
-        console.error(err);
-
-        setError(
-          "Could not load PDF.",
-        );
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadPDF();
+        setError(reason);
+        setLoading(false);
+      });
 
     return () => {
       cancelled = true;
 
-      loadingTask?.destroy();
+      URL.revokeObjectURL(
+        objectUrl,
+      );
+
+      void loadingTask.destroy();
     };
   }, [file]);
 
@@ -123,6 +80,5 @@ export function usePdfDocument({
     pdf,
     loading,
     error,
-    estimatedPageHeight,
   };
 }
