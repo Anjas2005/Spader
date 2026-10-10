@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import PdfPage from "./PdfPage";
 import PdfToolbar from "./PdfToolbar";
@@ -13,39 +7,25 @@ import { usePdfDocument } from "./hooks/usePdfDocument";
 import { usePdfRenderer } from "./hooks/usePdfRenderer";
 import { usePdfScale } from "./hooks/usePdfScale";
 
-import type {
-  PDFRendererProps,
-  ReadingMode,
-} from "./pdfTypes";
+import type { PDFRendererProps, ReadingMode } from "./pdfTypes";
 
 const CONTINUOUS_RADIUS = 3;
 
-function PdfRenderer({
-  file,
-  onBack,
-}: PDFRendererProps) {
-  const viewerRef =
-    useRef<HTMLDivElement | null>(null);
+function PdfRenderer({ file, onBack }: PDFRendererProps) {
+  const viewerRef = useRef<HTMLDivElement | null>(null);
 
-  const canvasRefs =
-    useRef<(HTMLCanvasElement | null)[]>([]);
+  const canvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
 
-  const pageContainerRefs =
-    useRef<(HTMLDivElement | null)[]>([]);
+  const pageContainerRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   /*
    * Prevent the continuous-mode scroll listener from
    * changing pageNumber while we are restoring the
    * selected page after a mode switch.
    */
-  const restoringPageRef =
-    useRef(false);
+  const restoringPageRef = useRef(false);
 
-  const {
-    pdf,
-    loading,
-    error,
-  } = usePdfDocument({
+  const { pdf, loading, error } = usePdfDocument({
     file,
   });
 
@@ -64,10 +44,7 @@ function PdfRenderer({
   });
 
   const estimatedPageHeight =
-    Math.max(viewerWidth - 48, 100) *
-    0.75 *
-    pageAspectRatio *
-    zoom;
+    Math.max(viewerWidth - 48, 100) * 0.75 * pageAspectRatio * zoom;
 
   const {
     renderAroundPage,
@@ -82,17 +59,13 @@ function PdfRenderer({
     estimatedPageHeight,
   });
 
-  const [pageNumber, setPageNumber] =
-    useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
 
-  const [pageInput, setPageInput] =
-    useState("1");
+  const [pageInput, setPageInput] = useState("1");
 
-  const [readingMode, setReadingMode] =
-    useState<ReadingMode>("continuous");
+  const [readingMode, setReadingMode] = useState<ReadingMode>("continuous");
 
-  const isPageInputFocused =
-    useRef(false);
+  const isPageInputFocused = useRef(false);
 
   /*
    * Reset everything when a new PDF is opened.
@@ -115,9 +88,7 @@ function PdfRenderer({
    */
   useEffect(() => {
     if (!isPageInputFocused.current) {
-      setPageInput(
-        String(pageNumber),
-      );
+      setPageInput(String(pageNumber));
     }
   }, [pageNumber]);
 
@@ -136,12 +107,7 @@ function PdfRenderer({
     }
 
     invalidateRendering();
-  }, [
-    pdf,
-    readingMode,
-    scale,
-    invalidateRendering,
-  ]);
+  }, [pdf, readingMode, scale, invalidateRendering]);
 
   /*
    * Render the appropriate window around the
@@ -155,29 +121,16 @@ function PdfRenderer({
       return;
     }
 
-    const radius =
-      readingMode === "page"
-        ? 0
-        : CONTINUOUS_RADIUS;
+    const radius = readingMode === "page" ? 0 : CONTINUOUS_RADIUS;
 
-    const frame =
-      requestAnimationFrame(() => {
-        renderAroundPage(
-          pageNumber,
-          radius,
-        );
-      });
+    const frame = requestAnimationFrame(() => {
+      renderAroundPage(pageNumber, radius);
+    });
 
     return () => {
       cancelAnimationFrame(frame);
     };
-  }, [
-    pdf,
-    pageNumber,
-    readingMode,
-    scale,
-    renderAroundPage,
-  ]);
+  }, [pdf, pageNumber, readingMode, scale, renderAroundPage]);
 
   /*
    * Scroll directly to a page.
@@ -187,30 +140,20 @@ function PdfRenderer({
    * used as a fallback.
    */
   const scrollToPage = useCallback(
-    (
-      targetPage: number,
-      behavior: ScrollBehavior = "auto",
-    ) => {
+    (targetPage: number, behavior: ScrollBehavior = "auto") => {
       if (!pdf) {
         return;
       }
 
-      const clampedPage = Math.min(
-        Math.max(targetPage, 1),
-        pdf.numPages,
-      );
+      const clampedPage = Math.min(Math.max(targetPage, 1), pdf.numPages);
 
-      const viewer =
-        viewerRef.current;
+      const viewer = viewerRef.current;
 
       if (!viewer) {
         return;
       }
 
-      const container =
-        pageContainerRefs.current[
-          clampedPage - 1
-        ];
+      const container = pageContainerRefs.current[clampedPage - 1];
 
       /*
        * If the page container exists,
@@ -218,8 +161,7 @@ function PdfRenderer({
        */
       if (container) {
         viewer.scrollTo({
-          top:
-            container.offsetTop - 24,
+          top: container.offsetTop - 24,
           behavior,
         });
 
@@ -230,14 +172,10 @@ function PdfRenderer({
        * Fallback for a page whose DOM
        * element is not available yet.
        */
-      const offset =
-        getPageOffset(clampedPage);
+      const offset = getPageOffset(clampedPage);
 
       viewer.scrollTo({
-        top: Math.max(
-          0,
-          offset - 24,
-        ),
+        top: Math.max(0, offset - 24),
         behavior,
       });
     },
@@ -266,11 +204,18 @@ function PdfRenderer({
    *
    * resume normal scroll tracking
    */
+  const previousReadingModeRef = useRef<ReadingMode>(readingMode);
+
   useEffect(() => {
-    if (
-      !pdf ||
-      readingMode !== "continuous"
-    ) {
+    const previousMode = previousReadingModeRef.current;
+    previousReadingModeRef.current = readingMode;
+    if (!pdf || readingMode !== "continuous") {
+      return;
+    }
+
+    // Restore only when switching from page mode
+    // back to continuous mode.
+    if (previousMode !== "page") {
       return;
     }
 
@@ -279,47 +224,32 @@ function PdfRenderer({
     let restoreFrame = 0;
     let releaseFrame = 0;
 
-    restoreFrame =
-      requestAnimationFrame(() => {
-        /*
-         * The continuous-mode page containers
-         * should now exist.
-         */
-        scrollToPage(
-          pageNumber,
-          "auto",
-        );
+    restoreFrame = requestAnimationFrame(() => {
+      /*
+       * The continuous-mode page containers
+       * should now exist.
+       */
+      scrollToPage(pageNumber, "auto");
 
-        /*
-         * Keep the scroll listener disabled
-         * for another frame so the scroll event
-         * generated by scrollToPage() cannot
-         * overwrite pageNumber.
-         */
-        releaseFrame =
-          requestAnimationFrame(() => {
-            restoringPageRef.current =
-              false;
-          });
+      /*
+       * Keep the scroll listener disabled
+       * for another frame so the scroll event
+       * generated by scrollToPage() cannot
+       * overwrite pageNumber.
+       */
+      releaseFrame = requestAnimationFrame(() => {
+        restoringPageRef.current = false;
       });
+    });
 
     return () => {
-      cancelAnimationFrame(
-        restoreFrame,
-      );
+      cancelAnimationFrame(restoreFrame);
 
-      cancelAnimationFrame(
-        releaseFrame,
-      );
+      cancelAnimationFrame(releaseFrame);
 
       restoringPageRef.current = false;
     };
-  }, [
-    pdf,
-    readingMode,
-    pageNumber,
-    scrollToPage,
-  ]);
+  }, [pdf, readingMode, pageNumber, scrollToPage]);
 
   /*
    * Commit a page number entered into the
@@ -330,24 +260,15 @@ function PdfRenderer({
       return;
     }
 
-    const parsed =
-      Number(pageInput);
+    const parsed = Number(pageInput);
 
     if (!Number.isFinite(parsed)) {
-      setPageInput(
-        String(pageNumber),
-      );
+      setPageInput(String(pageNumber));
 
       return;
     }
 
-    const target = Math.min(
-      Math.max(
-        Math.floor(parsed),
-        1,
-      ),
-      pdf.numPages,
-    );
+    const target = Math.min(Math.max(Math.floor(parsed), 1), pdf.numPages);
 
     setPageNumber(target);
 
@@ -356,185 +277,111 @@ function PdfRenderer({
      * attempting to scroll.
      */
     requestAnimationFrame(() => {
-      scrollToPage(
-        target,
-        "auto",
-      );
+      scrollToPage(target, "auto");
     });
-  }, [
-    pageInput,
-    pageNumber,
-    pdf,
-    scrollToPage,
-  ]);
+  }, [pageInput, pageNumber, pdf, scrollToPage]);
 
   /*
    * Go to the previous page.
    */
   const goPrevious = useCallback(() => {
-    if (
-      !pdf ||
-      pageNumber <= 1
-    ) {
+    if (!pdf || pageNumber <= 1) {
       return;
     }
 
-    const target =
-      pageNumber - 1;
+    const target = pageNumber - 1;
 
     setPageNumber(target);
 
     requestAnimationFrame(() => {
-      scrollToPage(
-        target,
-        "smooth",
-      );
+      scrollToPage(target, "smooth");
     });
-  }, [
-    pageNumber,
-    pdf,
-    scrollToPage,
-  ]);
+  }, [pageNumber, pdf, scrollToPage]);
 
   /*
    * Go to the next page.
    */
   const goNext = useCallback(() => {
-    if (
-      !pdf ||
-      pageNumber >= pdf.numPages
-    ) {
+    if (!pdf || pageNumber >= pdf.numPages) {
       return;
     }
 
-    const target =
-      pageNumber + 1;
+    const target = pageNumber + 1;
 
     setPageNumber(target);
 
     requestAnimationFrame(() => {
-      scrollToPage(
-        target,
-        "smooth",
-      );
+      scrollToPage(target, "smooth");
     });
-  }, [
-    pageNumber,
-    pdf,
-    scrollToPage,
-  ]);
+  }, [pageNumber, pdf, scrollToPage]);
 
   /*
    * Determine the page closest to the
    * vertical center of the visible PDF area.
    */
-  const updateCurrentPage =
-    useCallback(() => {
-      if (
-        !pdf ||
-        !viewerRef.current ||
-        readingMode !== "continuous"
-      ) {
-        return;
+  const updateCurrentPage = useCallback(() => {
+    if (!pdf || !viewerRef.current || readingMode !== "continuous") {
+      return;
+    }
+
+    /*
+     * IMPORTANT:
+     *
+     * Do not allow the temporary scroll
+     * generated during Page -> Continuous
+     * restoration to change pageNumber.
+     */
+    if (restoringPageRef.current) {
+      return;
+    }
+
+    const viewer = viewerRef.current;
+
+    const viewerRect = viewer.getBoundingClientRect();
+
+    const targetY = viewerRect.top + viewer.clientHeight / 2;
+
+    let closestPage = pageNumber;
+
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    /*
+     * These are lightweight page containers.
+     * We are not reading canvas pixels or
+     * rendering anything here.
+     */
+    for (let index = 0; index < pageContainerRefs.current.length; index++) {
+      const container = pageContainerRefs.current[index];
+
+      if (!container) {
+        continue;
       }
 
-      /*
-       * IMPORTANT:
-       *
-       * Do not allow the temporary scroll
-       * generated during Page -> Continuous
-       * restoration to change pageNumber.
-       */
-      if (
-        restoringPageRef.current
-      ) {
-        return;
+      const rect = container.getBoundingClientRect();
+
+      const pageCenter = rect.top + rect.height / 2;
+
+      const distance = Math.abs(pageCenter - targetY);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+
+        closestPage = index + 1;
       }
+    }
 
-      const viewer =
-        viewerRef.current;
-
-      const viewerRect =
-        viewer.getBoundingClientRect();
-
-      const targetY =
-        viewerRect.top +
-        viewer.clientHeight / 2;
-
-      let closestPage =
-        pageNumber;
-
-      let closestDistance =
-        Number.POSITIVE_INFINITY;
-
-      /*
-       * These are lightweight page containers.
-       * We are not reading canvas pixels or
-       * rendering anything here.
-       */
-      for (
-        let index = 0;
-        index <
-        pageContainerRefs.current.length;
-        index++
-      ) {
-        const container =
-          pageContainerRefs.current[
-            index
-          ];
-
-        if (!container) {
-          continue;
-        }
-
-        const rect =
-          container.getBoundingClientRect();
-
-        const pageCenter =
-          rect.top +
-          rect.height / 2;
-
-        const distance =
-          Math.abs(
-            pageCenter - targetY,
-          );
-
-        if (
-          distance <
-          closestDistance
-        ) {
-          closestDistance =
-            distance;
-
-          closestPage =
-            index + 1;
-        }
-      }
-
-      if (
-        closestPage !== pageNumber
-      ) {
-        setPageNumber(
-          closestPage,
-        );
-      }
-    }, [
-      pageNumber,
-      pdf,
-      readingMode,
-    ]);
+    if (closestPage !== pageNumber) {
+      setPageNumber(closestPage);
+    }
+  }, [pageNumber, pdf, readingMode]);
 
   /*
    * Scroll listener for Continuous mode.
    */
   useEffect(() => {
-    const viewer =
-      viewerRef.current;
+    const viewer = viewerRef.current;
 
-    if (
-      !viewer ||
-      readingMode !== "continuous"
-    ) {
+    if (!viewer || readingMode !== "continuous") {
       return;
     }
 
@@ -545,154 +392,96 @@ function PdfRenderer({
         return;
       }
 
-      frame =
-        requestAnimationFrame(() => {
-          frame = 0;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
 
-          updateCurrentPage();
-        });
+        updateCurrentPage();
+      });
     };
 
-    viewer.addEventListener(
-      "scroll",
-      handleScroll,
-      {
-        passive: true,
-      },
-    );
+    viewer.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
 
     return () => {
-      viewer.removeEventListener(
-        "scroll",
-        handleScroll,
-      );
+      viewer.removeEventListener("scroll", handleScroll);
 
       if (frame) {
         cancelAnimationFrame(frame);
       }
     };
-  }, [
-    readingMode,
-    updateCurrentPage,
-  ]);
+  }, [readingMode, updateCurrentPage]);
 
   /*
    * Keyboard controls.
    */
   useEffect(() => {
-    const handleKeyDown = (
-      event: KeyboardEvent,
-    ) => {
-      const target =
-        event.target;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target;
 
       if (
-        target instanceof
-          HTMLInputElement ||
-        target instanceof
-          HTMLTextAreaElement ||
-        target instanceof
-          HTMLSelectElement
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
       ) {
         return;
       }
 
-      if (
-        event.key ===
-        "ArrowLeft"
-      ) {
+      if (event.key === "ArrowLeft") {
         event.preventDefault();
 
         goPrevious();
       }
 
-      if (
-        event.key ===
-        "ArrowRight"
-      ) {
+      if (event.key === "ArrowRight") {
         event.preventDefault();
 
         goNext();
       }
 
-      if (
-        event.key === "PageUp"
-      ) {
+      if (event.key === "PageUp") {
         event.preventDefault();
 
-        const targetPage =
-          Math.max(
-            1,
-            pageNumber - 1,
-          );
+        const targetPage = Math.max(1, pageNumber - 1);
 
-        setPageNumber(
-          targetPage,
-        );
+        setPageNumber(targetPage);
 
-        scrollToPage(
-          targetPage,
-          "smooth",
-        );
+        scrollToPage(targetPage, "smooth");
       }
 
-      if (
-        event.key ===
-        "PageDown"
-      ) {
+      if (event.key === "PageDown") {
         event.preventDefault();
 
-        const targetPage =
-          Math.min(
-            pdf?.numPages ??
-              pageNumber,
-            pageNumber + 1,
-          );
-
-        setPageNumber(
-          targetPage,
+        const targetPage = Math.min(
+          pdf?.numPages ?? pageNumber,
+          pageNumber + 1,
         );
 
-        scrollToPage(
-          targetPage,
-          "smooth",
-        );
+        setPageNumber(targetPage);
+
+        scrollToPage(targetPage, "smooth");
       }
     };
 
-    window.addEventListener(
-      "keydown",
-      handleKeyDown,
-    );
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener(
-        "keydown",
-        handleKeyDown,
-      );
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [
-    goNext,
-    goPrevious,
-    pageNumber,
-    pdf,
-    scrollToPage,
-  ]);
+  }, [goNext, goPrevious, pageNumber, pdf, scrollToPage]);
 
-  const pageNumbers =
-    useMemo(() => {
-      if (!pdf) {
-        return [];
-      }
+  const pageNumbers = useMemo(() => {
+    if (!pdf) {
+      return [];
+    }
 
-      return Array.from(
-        {
-          length: pdf.numPages,
-        },
-        (_, index) =>
-          index + 1,
-      );
-    }, [pdf]);
+    return Array.from(
+      {
+        length: pdf.numPages,
+      },
+      (_, index) => index + 1,
+    );
+  }, [pdf]);
 
   /*
    * Loading state.
@@ -700,9 +489,7 @@ function PdfRenderer({
   if (loading) {
     return (
       <div className="spader-reader">
-        <div className="spader-loading">
-          Loading PDF...
-        </div>
+        <div className="spader-loading">Loading PDF...</div>
       </div>
     );
   }
@@ -714,15 +501,9 @@ function PdfRenderer({
     return (
       <div className="spader-reader">
         <div className="spader-error">
-          <h2>
-            Failed to load PDF
-          </h2>
+          <h2>Failed to load PDF</h2>
 
-          <button
-            type="button"
-            onClick={onBack}
-            className="spader-back-button"
-          >
+          <button type="button" onClick={onBack} className="spader-back-button">
             ← Back
           </button>
         </div>
@@ -733,9 +514,7 @@ function PdfRenderer({
   if (!pdf) {
     return (
       <div className="spader-reader">
-        <div className="spader-loading">
-          Preparing PDF...
-        </div>
+        <div className="spader-loading">Preparing PDF...</div>
       </div>
     );
   }
@@ -749,16 +528,12 @@ function PdfRenderer({
         pageInput={pageInput}
         setPageInput={setPageInput}
         onPageInputFocus={() => {
-          isPageInputFocused.current =
-            true;
+          isPageInputFocused.current = true;
         }}
         onPageInputBlur={() => {
-          isPageInputFocused.current =
-            false;
+          isPageInputFocused.current = false;
 
-          setPageInput(
-            String(pageNumber),
-          );
+          setPageInput(String(pageNumber));
         }}
         onCommitPage={commitPage}
         onPrevious={goPrevious}
@@ -768,96 +543,54 @@ function PdfRenderer({
         onZoomOut={zoomOut}
         onResetZoom={resetZoom}
         readingMode={readingMode}
-        onReadingModeChange={
-          setReadingMode
-        }
+        onReadingModeChange={setReadingMode}
         onBack={onBack}
       />
 
       <div className="spader-reader-body">
-        <main
-          ref={viewerRef}
-          className="spader-pdf-viewer"
-        >
-          {readingMode ===
-          "page" ? (
+        <main ref={viewerRef} className="spader-pdf-viewer">
+          {readingMode === "page" ? (
             <div className="spader-pdf-document">
               <div
                 className="spader-pdf-page-wrapper"
                 style={{
-                  minHeight: `${getPageHeight(
-                    pageNumber,
-                  )}px`,
+                  minHeight: `${getPageHeight(pageNumber)}px`,
                 }}
               >
                 <PdfPage
-                  pageNumber={
-                    pageNumber
-                  }
-                  canvasRef={(
-                    element,
-                  ) => {
-                    canvasRefs.current[
-                      pageNumber - 1
-                    ] = element;
+                  pageNumber={pageNumber}
+                  canvasRef={(element) => {
+                    canvasRefs.current[pageNumber - 1] = element;
                   }}
-                  pageContainerRef={(
-                    element,
-                  ) => {
-                    pageContainerRefs.current[
-                      pageNumber - 1
-                    ] = element;
+                  pageContainerRef={(element) => {
+                    pageContainerRefs.current[pageNumber - 1] = element;
                   }}
-                  minHeight={getPageHeight(
-                    pageNumber,
-                  )}
+                  minHeight={getPageHeight(pageNumber)}
                 />
               </div>
             </div>
           ) : (
             <div className="spader-pdf-document">
-              {pageNumbers.map(
-                (
-                  pageNumberValue,
-                ) => (
-                  <div
-                    key={
-                      pageNumberValue
-                    }
-                    className="spader-pdf-page-wrapper"
-                    style={{
-                      minHeight: `${getPageHeight(
-                        pageNumberValue,
-                      )}px`,
+              {pageNumbers.map((pageNumberValue) => (
+                <div
+                  key={pageNumberValue}
+                  className="spader-pdf-page-wrapper"
+                  style={{
+                    minHeight: `${getPageHeight(pageNumberValue)}px`,
+                  }}
+                >
+                  <PdfPage
+                    pageNumber={pageNumberValue}
+                    canvasRef={(element) => {
+                      canvasRefs.current[pageNumberValue - 1] = element;
                     }}
-                  >
-                    <PdfPage
-                      pageNumber={
-                        pageNumberValue
-                      }
-                      canvasRef={(
-                        element,
-                      ) => {
-                        canvasRefs.current[
-                          pageNumberValue -
-                            1
-                        ] = element;
-                      }}
-                      pageContainerRef={(
-                        element,
-                      ) => {
-                        pageContainerRefs.current[
-                          pageNumberValue -
-                            1
-                        ] = element;
-                      }}
-                      minHeight={getPageHeight(
-                        pageNumberValue,
-                      )}
-                    />
-                  </div>
-                ),
-              )}
+                    pageContainerRef={(element) => {
+                      pageContainerRefs.current[pageNumberValue - 1] = element;
+                    }}
+                    minHeight={getPageHeight(pageNumberValue)}
+                  />
+                </div>
+              ))}
             </div>
           )}
         </main>

@@ -1,7 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
 import {
   getDocument,
@@ -11,26 +8,16 @@ import {
 
 import workerSrc from "pdfjs-dist/build/pdf.worker.mjs?url";
 
-import type {
-  UsePdfDocumentOptions,
-} from "../pdfTypes";
+import type { UsePdfDocumentOptions } from "../pdfTypes";
 
-GlobalWorkerOptions.workerSrc =
-  workerSrc;
+GlobalWorkerOptions.workerSrc = workerSrc;
 
-export function usePdfDocument({
-  file,
-}: UsePdfDocumentOptions) {
-  const [pdf, setPdf] =
-    useState<PDFDocumentProxy | null>(
-      null,
-    );
+export function usePdfDocument({ file }: UsePdfDocumentOptions) {
+  const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState<unknown>(null);
+  const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,13 +26,11 @@ export function usePdfDocument({
     setLoading(true);
     setError(null);
 
-    const objectUrl =
-      URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
 
-    const loadingTask =
-      getDocument({
-        url: objectUrl,
-      });
+    const loadingTask = getDocument({
+      url: objectUrl,
+    });
 
     loadingTask.promise
       .then((document) => {
@@ -68,9 +53,7 @@ export function usePdfDocument({
     return () => {
       cancelled = true;
 
-      URL.revokeObjectURL(
-        objectUrl,
-      );
+      URL.revokeObjectURL(objectUrl);
 
       void loadingTask.destroy();
     };
