@@ -2,6 +2,8 @@ import {
   useState,
 } from "react";
 
+import { Analytics } from '@vercel/analytics/react';
+
 import Home from "./pages/Home";
 import PDFView from "./pages/PDFView";
 
@@ -15,19 +17,25 @@ function App() {
 
   if (!file) {
     return (
-      <Home
-        onFileSelect={setFile}
-      />
+      <>
+        <Home
+          onFileSelect={setFile}
+        />
+        <Analytics />
+      </>
     );
   }
 
   return (
-    <PDFView
-      file={file}
-      onBack={() => {
-        setFile(null);
-      }}
-    />
+    <>
+      <PDFView
+        file={file}
+        onBack={() => {
+          setFile(null);
+        }}
+      />
+      <Analytics />
+    </>
   );
 }
 
