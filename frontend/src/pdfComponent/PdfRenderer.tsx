@@ -8,6 +8,7 @@ import { usePdfRenderer } from "./hooks/usePdfRenderer";
 import { usePdfScale } from "./hooks/usePdfScale";
 
 import type { PDFRendererProps, ReadingMode } from "./pdfTypes";
+import indexThePdf from "./hooks/useIndexToFind";
 
 const CONTINUOUS_RADIUS = 3;
 
@@ -28,6 +29,10 @@ function PdfRenderer({ file, onBack }: PDFRendererProps) {
   const { pdf, loading, error } = usePdfDocument({
     file,
   });
+  
+  // Calling the hook here 
+
+  const {indexed,ongoing,failed} = indexThePdf({ pdf });
 
   const {
     scale,

@@ -139,7 +139,8 @@
   border: 1px solid transparent;
   border-radius: 5px;
 
-  background: transparent;
+  background: #f5f3ef;
+  border-color: #c0c8cc;
 
   color: #40484c;
 
@@ -148,10 +149,6 @@
   cursor: pointer;
 }
 
-.spader-find-button:hover {
-  background: #f5f3ef;
-  border-color: #c0c8cc;
-}
 
 .spader-find-shortcut {
   padding: 2px 5px;

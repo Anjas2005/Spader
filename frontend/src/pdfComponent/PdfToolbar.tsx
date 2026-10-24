@@ -1,12 +1,6 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
-import type {
-  PdfToolbarProps,
-} from "./pdfTypes";
+import type { PdfToolbarProps } from "./pdfTypes";
 
 function PdfToolbar({
   file,
@@ -27,78 +21,47 @@ function PdfToolbar({
   onReadingModeChange,
   onBack,
 }: PdfToolbarProps) {
-  const [menuOpen, setMenuOpen] =
-    useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const mobileMenuRef =
-    useRef<HTMLDivElement | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const tabletMenuRef =
-    useRef<HTMLDivElement | null>(null);
+  const tabletMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!menuOpen) {
       return;
     }
 
-    function handlePointerDown(
-      event: MouseEvent,
-    ) {
-      const target =
-        event.target as Node;
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as Node;
 
-      const insideMobileMenu =
-        mobileMenuRef.current?.contains(
-          target,
-        );
+      const insideMobileMenu = mobileMenuRef.current?.contains(target);
 
-      const insideTabletMenu =
-        tabletMenuRef.current?.contains(
-          target,
-        );
+      const insideTabletMenu = tabletMenuRef.current?.contains(target);
 
-      if (
-        !insideMobileMenu &&
-        !insideTabletMenu
-      ) {
+      if (!insideMobileMenu && !insideTabletMenu) {
         setMenuOpen(false);
       }
     }
 
-    function handleKeyDown(
-      event: KeyboardEvent,
-    ) {
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setMenuOpen(false);
       }
     }
 
-    document.addEventListener(
-      "mousedown",
-      handlePointerDown,
-    );
+    document.addEventListener("mousedown", handlePointerDown);
 
-    document.addEventListener(
-      "keydown",
-      handleKeyDown,
-    );
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handlePointerDown,
-      );
+      document.removeEventListener("mousedown", handlePointerDown);
 
-      document.removeEventListener(
-        "keydown",
-        handleKeyDown,
-      );
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [menuOpen]);
 
-  function handleReadingModeChange(
-    mode: "page" | "continuous",
-  ) {
+  function handleReadingModeChange(mode: "page" | "continuous") {
     onReadingModeChange(mode);
     setMenuOpen(false);
   }
@@ -112,8 +75,6 @@ function PdfToolbar({
     <header
       className="
         spader-topbar
-        relative
-        z-20
         flex
         min-w-0
         items-center
@@ -138,9 +99,7 @@ function PdfToolbar({
       >
         <button
           type="button"
-          onClick={() =>
-            setMenuOpen((open) => !open)
-          }
+          onClick={() => setMenuOpen((open) => !open)}
           className="spader-icon-button"
           title="Menu"
           aria-label="Open menu"
@@ -155,20 +114,20 @@ function PdfToolbar({
             role="menu"
             aria-label="Toolbar menu"
             className="
-              absolute
-              left-0
-              top-[calc(100%+0.5rem)]
-              z-50
-              min-w-56
-              overflow-hidden
-              rounded-lg
-              border
-              border-[#c0c8cc]
-              bg-white
-              p-1
-              text-[#1b1c1a]
-              shadow-xl
-            "
+            absolute
+            left-0
+            top-[calc(100%+0.5rem)]
+            z-50
+            min-w-56
+            overflow-hidden
+            rounded-lg
+            border
+            border-[#c0c8cc]
+            bg-white
+            p-1
+            text-[#1b1c1a]
+            shadow-xl
+          "
           >
             {/* Back */}
             <button
@@ -189,7 +148,10 @@ function PdfToolbar({
               "
             >
               <span
-                className="w-5 text-center"
+                className="
+                  w-5
+                  text-center
+                "
                 aria-hidden="true"
               >
                 ←
@@ -198,13 +160,11 @@ function PdfToolbar({
               <span>Back</span>
             </button>
 
-            {/* Find */}
+            {/* Find - ONE clickable object */}
             <button
               type="button"
               role="menuitem"
-              onClick={() =>
-                setMenuOpen(false)
-              }
+              onClick={() => setMenuOpen(false)}
               className="
                 flex
                 w-full
@@ -215,13 +175,17 @@ function PdfToolbar({
                 py-2.5
                 text-left
                 text-sm
-                hover:bg-[#f5f3ef]
+                hover:bg-black/5
+                dark:hover:bg-white/5
               "
               title="Find (Ctrl+F)"
               aria-label="Find, Ctrl+F"
             >
               <span
-                className="w-5 text-center"
+                className="
+                  w-5
+                  text-center
+                "
                 aria-hidden="true"
               >
                 ⌕
@@ -234,11 +198,12 @@ function PdfToolbar({
                   ml-auto
                   rounded
                   border
-                  border-[#c0c8cc]
+                  border-black/10
                   px-1.5
                   py-0.5
                   text-[11px]
-                  text-[#70787c]
+                  opacity-60
+                  dark:border-white/10
                 "
               >
                 Ctrl F
@@ -249,7 +214,8 @@ function PdfToolbar({
               className="
                 my-1
                 h-px
-                bg-[#c0c8cc]
+                bg-black/10
+                dark:bg-white/10
               "
             />
 
@@ -263,7 +229,12 @@ function PdfToolbar({
                 py-1
               "
             >
-              <span className="mr-auto text-sm">
+              <span
+                className="
+                  mr-auto
+                  text-sm
+                "
+              >
                 Zoom
               </span>
 
@@ -301,36 +272,42 @@ function PdfToolbar({
               className="
                 my-1
                 h-px
-                bg-[#c0c8cc]
+                bg-black/10
+                dark:bg-white/10
               "
             />
 
             {/* Reading mode */}
-            <div className="px-2 py-1">
+            <div
+              className="
+                px-2
+                py-1
+              "
+            >
               <span
                 className="
                   mb-2
                   block
                   text-sm
-                  text-[#70787c]
+                  opacity-70
                 "
               >
                 Reading mode
               </span>
 
-              <div className="grid grid-cols-2 gap-1">
+              <div
+                className="
+                  grid
+                  grid-cols-2
+                  gap-1
+                "
+              >
                 <button
                   type="button"
-                  onClick={() =>
-                    handleReadingModeChange("page")
-                  }
+                  onClick={() => handleReadingModeChange("page")}
                   className={`
                     spader-mode-button
-                    ${
-                      readingMode === "page"
-                        ? "is-active"
-                        : ""
-                    }
+                    ${readingMode === "page" ? "is-active" : ""}
                   `}
                 >
                   Page
@@ -338,18 +315,10 @@ function PdfToolbar({
 
                 <button
                   type="button"
-                  onClick={() =>
-                    handleReadingModeChange(
-                      "continuous",
-                    )
-                  }
+                  onClick={() => handleReadingModeChange("continuous")}
                   className={`
                     spader-mode-button
-                    ${
-                      readingMode === "continuous"
-                        ? "is-active"
-                        : ""
-                    }
+                    ${readingMode === "continuous" ? "is-active" : ""}
                   `}
                 >
                   Continuous
@@ -361,7 +330,8 @@ function PdfToolbar({
               className="
                 my-1
                 h-px
-                bg-[#c0c8cc]
+                bg-black/10
+                dark:bg-white/10
               "
             />
 
@@ -369,9 +339,7 @@ function PdfToolbar({
             <button
               type="button"
               role="menuitem"
-              onClick={() =>
-                setMenuOpen(false)
-              }
+              onClick={() => setMenuOpen(false)}
               className="
                 flex
                 w-full
@@ -382,11 +350,15 @@ function PdfToolbar({
                 py-2.5
                 text-left
                 text-sm
-                hover:bg-[#f5f3ef]
+                hover:bg-black/5
+                dark:hover:bg-white/5
               "
             >
               <span
-                className="w-5 text-center"
+                className="
+                  w-5
+                  text-center
+                "
                 aria-hidden="true"
               >
                 ⚙
@@ -409,6 +381,7 @@ function PdfToolbar({
           shrink
         "
       >
+        {/* Back */}
         <button
           type="button"
           onClick={onBack}
@@ -418,13 +391,9 @@ function PdfToolbar({
           "
           title="Back"
         >
-          <span aria-hidden="true">
-            ←
-          </span>
+          <span aria-hidden="true">←</span>
 
-          <span className="hidden lg:inline">
-            Back
-          </span>
+          <span className="hidden lg:inline">Back</span>
         </button>
 
         <span
@@ -435,6 +404,7 @@ function PdfToolbar({
           "
         />
 
+        {/* Brand */}
         <span
           className="
             spader-brand-name
@@ -452,6 +422,7 @@ function PdfToolbar({
           "
         />
 
+        {/* Document name */}
         <span
           className="
             spader-document-name
@@ -487,7 +458,14 @@ function PdfToolbar({
           sm:gap-2
         "
       >
-        {/* Find */}
+        {/* =======================================================
+            FIND
+
+            ONE single clickable button.
+
+            The entire rectangular surface is clickable.
+            "Find" and "Ctrl F" are just content inside it.
+           ======================================================= */}
 
         <button
           type="button"
@@ -524,7 +502,10 @@ function PdfToolbar({
           "
         />
 
-        {/* Page navigation */}
+        {/* =======================================================
+            PAGE NAVIGATION
+            Always visible.
+           ======================================================= */}
 
         <div
           className="
@@ -550,12 +531,8 @@ function PdfToolbar({
             "
           >
             <input
-              id="spader-page-number"
-              name="pageNumber"
               value={pageInput}
-              onChange={(event) =>
-                setPageInput(event.target.value)
-              }
+              onChange={(event) => setPageInput(event.target.value)}
               onFocus={onPageInputFocus}
               onBlur={onPageInputBlur}
               onKeyDown={(event) => {
@@ -566,6 +543,7 @@ function PdfToolbar({
 
                 if (event.key === "Escape") {
                   setPageInput(String(pageNumber));
+
                   event.currentTarget.blur();
                 }
               }}
@@ -600,7 +578,9 @@ function PdfToolbar({
           </button>
         </div>
 
-        {/* Zoom */}
+        {/* =======================================================
+            ZOOM
+           ======================================================= */}
 
         <span
           className="
@@ -649,7 +629,9 @@ function PdfToolbar({
           </button>
         </div>
 
-        {/* Spacer */}
+        {/* =======================================================
+            SPACER
+           ======================================================= */}
 
         <span
           className="
@@ -659,7 +641,9 @@ function PdfToolbar({
           "
         />
 
-        {/* Reading mode */}
+        {/* =======================================================
+            READING MODE
+           ======================================================= */}
 
         <div
           className="
@@ -673,16 +657,10 @@ function PdfToolbar({
         >
           <button
             type="button"
-            onClick={() =>
-              onReadingModeChange("page")
-            }
+            onClick={() => onReadingModeChange("page")}
             className={`
               spader-mode-button
-              ${
-                readingMode === "page"
-                  ? "is-active"
-                  : ""
-              }
+              ${readingMode === "page" ? "is-active" : ""}
             `}
           >
             Page
@@ -690,26 +668,20 @@ function PdfToolbar({
 
           <button
             type="button"
-            onClick={() =>
-              onReadingModeChange("continuous")
-            }
+            onClick={() => onReadingModeChange("continuous")}
             className={`
               spader-mode-button
-              ${
-                readingMode === "continuous"
-                  ? "is-active"
-                  : ""
-              }
+              ${readingMode === "continuous" ? "is-active" : ""}
             `}
           >
             Continuous
           </button>
         </div>
 
-        {/* =========================================================
+        {/* =======================================================
             TABLET OVERFLOW
             Visible md -> below lg.
-           ========================================================= */}
+           ======================================================= */}
 
         <div
           ref={tabletMenuRef}
@@ -723,9 +695,7 @@ function PdfToolbar({
         >
           <button
             type="button"
-            onClick={() =>
-              setMenuOpen((open) => !open)
-            }
+            onClick={() => setMenuOpen((open) => !open)}
             className="spader-icon-button"
             title="More"
             aria-label="More toolbar actions"
@@ -739,49 +709,53 @@ function PdfToolbar({
             <div
               role="menu"
               aria-label="More toolbar actions"
-              className="
-                absolute
-                right-0
-                top-[calc(100%+0.5rem)]
-                z-50
-                min-w-56
-                overflow-hidden
-                rounded-lg
-                border
-                border-[#c0c8cc]
-                bg-white
-                p-1
-                text-[#1b1c1a]
-                shadow-xl
-              "
+             className="
+            absolute
+            right-0
+            top-[calc(100%+0.5rem)]
+            z-50
+            min-w-56
+            overflow-hidden
+            rounded-lg
+            border
+            border-[#c0c8cc]
+            bg-white
+            p-1
+            text-[#1b1c1a]
+            shadow-xl
+          "
             >
               {/* Reading mode */}
-
-              <div className="px-2 py-1">
+              <div
+                className="
+                  px-2
+                  py-1
+                "
+              >
                 <span
                   className="
                     mb-2
                     block
                     text-sm
-                    text-[#70787c]
+                    opacity-70
                   "
                 >
                   Reading mode
                 </span>
 
-                <div className="grid grid-cols-2 gap-1">
+                <div
+                  className="
+                    grid
+                    grid-cols-2
+                    gap-1
+                  "
+                >
                   <button
                     type="button"
-                    onClick={() =>
-                      handleReadingModeChange("page")
-                    }
+                    onClick={() => handleReadingModeChange("page")}
                     className={`
                       spader-mode-button
-                      ${
-                        readingMode === "page"
-                          ? "is-active"
-                          : ""
-                      }
+                      ${readingMode === "page" ? "is-active" : ""}
                     `}
                   >
                     Page
@@ -789,18 +763,10 @@ function PdfToolbar({
 
                   <button
                     type="button"
-                    onClick={() =>
-                      handleReadingModeChange(
-                        "continuous",
-                      )
-                    }
+                    onClick={() => handleReadingModeChange("continuous")}
                     className={`
                       spader-mode-button
-                      ${
-                        readingMode === "continuous"
-                          ? "is-active"
-                          : ""
-                      }
+                      ${readingMode === "continuous" ? "is-active" : ""}
                     `}
                   >
                     Continuous
@@ -812,18 +778,16 @@ function PdfToolbar({
                 className="
                   my-1
                   h-px
-                  bg-[#c0c8cc]
+                  bg-black/10
+                  dark:bg-white/10
                 "
               />
 
               {/* Settings */}
-
               <button
                 type="button"
                 role="menuitem"
-                onClick={() =>
-                  setMenuOpen(false)
-                }
+                onClick={() => setMenuOpen(false)}
                 className="
                   flex
                   w-full
@@ -838,7 +802,10 @@ function PdfToolbar({
                 "
               >
                 <span
-                  className="w-5 text-center"
+                  className="
+                    w-5
+                    text-center
+                  "
                   aria-hidden="true"
                 >
                   ⚙
@@ -850,7 +817,9 @@ function PdfToolbar({
           )}
         </div>
 
-        {/* Settings */}
+        {/* =======================================================
+            SETTINGS
+           ======================================================= */}
 
         <button
           type="button"
