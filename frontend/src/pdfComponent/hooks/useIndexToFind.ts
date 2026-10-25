@@ -12,6 +12,12 @@ function indexThePdf({ pdf }: UsePdfIndexOption ): IndexStatus{
   useEffect(() => {
   if(!pdf) return;
 
+  
+  // TEMPORARY: prevents TS6133 unused-setter errors.
+  // TODO: Delete once the real indexing logic uses these setters.
+  void setIndex;
+  void setOngoing;
+  void setFailed;
 
   })
 

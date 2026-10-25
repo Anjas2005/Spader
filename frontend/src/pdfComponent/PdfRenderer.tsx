@@ -33,6 +33,8 @@ function PdfRenderer({ file, onBack }: PDFRendererProps) {
   // Calling the hook here 
 
   const {indexed,ongoing,failed} = indexThePdf({ pdf });
+  // TODO: Remove this line later its just for the time here
+  console.log(indexed,ongoing,failed);
 
   const {
     scale,
