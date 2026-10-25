@@ -34,6 +34,16 @@ export interface UsePdfDocumentOptions {
   file: File;
 }
 
+export interface IndexStatus {
+  indexed: boolean;
+  ongoing: boolean;
+  failed: boolean;
+}
+
+export interface UsePdfIndexOption {
+  pdf: PDFDocumentProxy | null;
+}
+
 export interface UsePdfScaleOptions {
   viewerRef: RefObject<
     HTMLDivElement | null
@@ -108,3 +118,4 @@ export interface PdfRendererState {
     (number | undefined)[]
   >;
 }
+
