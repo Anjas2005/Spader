@@ -61,15 +61,7 @@
       "dist/**/*",
       "dist-electron/**/*"
     ],
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "Anjas2005",
-        "repo": "Spader",
-        "releaseType": "release",
-        "releaseName": "v0.1.0"
-      }
-    ],
+    "publish": [],
     "linux": {
       "target": [
         "AppImage",
@@ -89,6 +81,9 @@
       "target": [
         "nsis"
       ]
+    },
+    "releaseInfo": {
+      "releaseName": "v0.1.0"
     }
   }
 }
