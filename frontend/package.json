@@ -1,20 +1,31 @@
 {
-  "name": "frontend",
+  "name": "spader",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "dist-electron/main.js",
+  "desktopName": "com.anjas2005.spader",
+  "description": "A lightweight PDF reader with local-first search.",
+  "homepage": "https://github.com/Anjas2005/Spader",
+  "author": {
+    "name": "Anjas2005",
+    "email": "anjasvaidya2020@gmail.com"
+  },
   "scripts": {
     "dev": "vite",
     "dev:electron": "vite --mode electron",
     "build": "tsc -b && vite build",
     "build:electron": "tsc -b && vite build --mode electron",
+    "package:linux": "npm run build:electron && electron-builder --linux AppImage deb",
+    "package:win": "npm run build:electron && electron-builder --win nsis",
+    "package:mac": "npm run build:electron && electron-builder --mac dmg zip",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@vercel/analytics": "^2.0.1",
+    "electron-updater": "^6.8.11",
     "pdfjs-dist": "^6.4.299",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -33,10 +44,50 @@
     "@vitejs/plugin-react": "^6.1.1",
     "babel-plugin-react-compiler": "^1.0.0",
     "electron": "^45.0.0",
+    "electron-builder": "^26.18.0",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "vite-plugin-electron": "^1.1.2",
     "vite-plugin-pwa": "^2.0.0"
+  },
+  "build": {
+    "appId": "com.anjas2005.spader",
+    "productName": "Spader",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Anjas2005",
+        "repo": "Spader",
+        "releaseType": "draft"
+      }
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "maintainer": "Anjas2005 <anjasvaidya2020@gmail.com>",
+      "category": "Utility",
+      "syncDesktopName": true
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
   }
 }
