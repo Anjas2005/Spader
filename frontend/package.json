@@ -61,7 +61,14 @@
       "dist/**/*",
       "dist-electron/**/*"
     ],
-    "publish": [],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Anjas2005",
+        "repo": "Spader",
+        "releaseType": "release"
+      }
+    ],
     "linux": {
       "target": [
         "AppImage",
