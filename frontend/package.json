@@ -6,9 +6,9 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "dev:electron":"vite --mode electron",
+    "dev:electron": "vite --mode electron",
     "build": "tsc -b && vite build",
-    "build:electron":"tsc -b && vite build --mode electron",
+    "build:electron": "tsc -b && vite build --mode electron",
     "lint": "oxlint",
     "preview": "vite preview"
   },
