@@ -66,7 +66,8 @@
         "provider": "github",
         "owner": "Anjas2005",
         "repo": "Spader",
-        "releaseType": "draft"
+        "releaseType": "release",
+        "releaseName": "v0.1.0"
       }
     ],
     "linux": {
