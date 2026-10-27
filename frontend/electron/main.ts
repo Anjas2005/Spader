@@ -1,10 +1,18 @@
 import { app, BrowserWindow, Menu } from "electron";
+import { autoUpdater } from "electron-updater";
 import { join } from "node:path";
 
 // Don't give me a menu bar
 Menu.setApplicationMenu(null);
 
 app.whenReady().then(() => {
+  if (app.isPackaged) {
+    autoUpdater.on("error", (error) => {
+      console.error("Auto Update has failed :", error);
+    });
+    autoUpdater.checkForUpdatesAndNotify();
+  }
+
   const win = new BrowserWindow({
     width: 1280,
     height: 850,
@@ -25,4 +33,3 @@ app.whenReady().then(() => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
-
