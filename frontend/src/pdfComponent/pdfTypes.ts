@@ -40,8 +40,10 @@ export interface IndexStatus {
   failed: boolean;
 }
 
+
 export interface UsePdfIndexOption {
   pdf: PDFDocumentProxy | null;
+  file: File | null;
 }
 
 export interface UsePdfScaleOptions {

@@ -25,6 +25,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@vercel/analytics": "^2.0.1",
+    "dexie": "^4.4.7",
     "electron-updater": "^6.8.11",
     "pdfjs-dist": "^6.4.299",
     "react": "^19.2.8",
